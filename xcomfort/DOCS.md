@@ -36,6 +36,10 @@ Add-on configuration:
 
 ```yaml
 mqtt_client_id: xcomfort
+mqtt_host: ""
+mqtt_port: 1883
+mqtt_username: ""
+mqtt_password: ""
 eprom: true
 datapoints_file: ""
 verbose: false
@@ -49,6 +53,28 @@ ha_discovery_remove: false
 ### Option: `mqtt_client_id`
 
 ID of the MQTT client the daemon connects with. 
+
+### Option: `mqtt_host`
+
+Host address of the MQTT broker to connect to.  Leave this empty to use the MQTT broker that Home Assistant provides, which is the usual setup when you run the Mosquitto broker add-on.  Set it to a host name or IP address to connect to a broker running outside of Home Assistant instead.
+
+Note that the MQTT integration in Home Assistant is not consulted here.  A broker configured only in that integration is invisible to add-ons, so if your broker runs outside Home Assistant, you must repeat its address in this option.
+
+The remaining `mqtt_` options below are only used when `mqtt_host` is set, and are ignored otherwise.
+
+### Option: `mqtt_port`
+
+Port of the MQTT broker.  Defaults to 1883.
+
+TLS is not supported: the daemon always connects in plaintext, whatever port you give it.  Pointing this at a TLS listener such as 8883 will not connect.
+
+### Option: `mqtt_username`
+
+User name to authenticate with.  Leave empty to connect anonymously, which requires a broker that permits anonymous connections.
+
+### Option: `mqtt_password`
+
+Password to authenticate with.  Only used when `mqtt_username` is set.
 
 ### Option: `eprom`
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.74.1
+
+ - Allow connecting to an MQTT broker outside of Home Assistant, via the new `mqtt_host`, `mqtt_port`, `mqtt_username` and `mqtt_password` options.  Leave `mqtt_host` empty to keep using the broker provided by Home Assistant.
+
 ## 0.74
 
  - Attempt to return current temperature correctly.

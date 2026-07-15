@@ -4,11 +4,40 @@ set -e
 
 CONFIG_PATH=/config
 
+# Percent-encode, so that credentials containing reserved characters survive
+# the URL parse in xcomfortd.
+urlencode() {
+    jq -rn --arg v "${1}" '$v|@uri'
+}
+
 MQTT_CLIENT_ID="$(bashio::config 'mqtt_client_id')"
-MQTT_HOST=$(bashio::services mqtt "host")
-MQTT_PORT=$(bashio::services mqtt "port")
-MQTT_USER=$(bashio::services mqtt "username")
-MQTT_PASSWORD=$(bashio::services mqtt "password")
+
+if bashio::config.has_value 'mqtt_host'; then
+    MQTT_HOST="$(bashio::config 'mqtt_host')"
+    MQTT_PORT="$(bashio::config 'mqtt_port')"
+    MQTT_USER="$(bashio::config 'mqtt_username')"
+    MQTT_PASSWORD="$(bashio::config 'mqtt_password')"
+    bashio::log.info "Using configured MQTT broker ${MQTT_HOST}:${MQTT_PORT}"
+elif bashio::services.available 'mqtt'; then
+    MQTT_HOST=$(bashio::services mqtt "host")
+    MQTT_PORT=$(bashio::services mqtt "port")
+    MQTT_USER=$(bashio::services mqtt "username")
+    MQTT_PASSWORD=$(bashio::services mqtt "password")
+    bashio::log.info "Using Home Assistant MQTT service ${MQTT_HOST}:${MQTT_PORT}"
+else
+    bashio::exit.nok "No MQTT broker available: set the 'mqtt_host' option, or install the Mosquitto broker add-on."
+fi
+
+MQTT_AUTH=""
+MQTT_AUTH_REDACTED=""
+
+if bashio::var.has_value "${MQTT_USER}"; then
+    MQTT_AUTH="$(urlencode "${MQTT_USER}"):$(urlencode "${MQTT_PASSWORD}")@"
+    MQTT_AUTH_REDACTED="$(urlencode "${MQTT_USER}"):*****@"
+fi
+
+MQTT_SERVER="tcp://${MQTT_AUTH}${MQTT_HOST}:${MQTT_PORT}"
+MQTT_SERVER_REDACTED="tcp://${MQTT_AUTH_REDACTED}${MQTT_HOST}:${MQTT_PORT}"
 
 DATAPOINTS_FILE="$(bashio::config 'datapoints_file')"
 EPROM="$(bashio::config 'eprom')"
@@ -22,7 +51,7 @@ ECI_HOSTS="$(bashio::config 'eci_hosts')"
 
 set -- xcomfortd \
     --client-id ${MQTT_CLIENT_ID} \
-    --server "tcp://${MQTT_USER}:${MQTT_PASSWORD}@${MQTT_HOST}:${MQTT_PORT}" \
+    --server "${MQTT_SERVER}" \
     --hadiscoveryprefix ${HA_DISCOVERY_PREFIX}
 
 if [ "$EPROM" = "true" ]; then
@@ -54,6 +83,6 @@ if [ "$HIDAPI" = "true" ]; then
 fi
 
 bashio::log.info "Starting $(xcomfortd --version)"
-bashio::log.info "$(echo $@ | sed s/${MQTT_USER}:${MQTT_PASSWORD}/*****/g)"
+bashio::log.info "$(echo "$@" | sed "s|${MQTT_SERVER}|${MQTT_SERVER_REDACTED}|g")"
 
 exec "$@"

@@ -1,6 +1,6 @@
 {
     "name": "xComfort",
-    "version": "0.74",
+    "version": "0.74.1",
     "slug": "xcomfort",
     "description": "Eaton xComfort to MQTT gateway",
     "startup": "application",
@@ -21,10 +21,14 @@
         "config:rw"
     ],
     "services": [
-        "mqtt:need"
+        "mqtt:want"
     ],
     "options": {
         "mqtt_client_id": "xcomfort",
+        "mqtt_host": "",
+        "mqtt_port": 1883,
+        "mqtt_username": "",
+        "mqtt_password": "",
         "datapoints_file": "",
         "eprom": true,
         "ha_discovery": true,
@@ -36,6 +40,10 @@
     },
     "schema": {
         "mqtt_client_id": "str",
+        "mqtt_host": "str?",
+        "mqtt_port": "port?",
+        "mqtt_username": "str?",
+        "mqtt_password": "password?",
         "datapoints_file": "str",
         "eprom": "bool",
         "ha_discovery": "bool",
